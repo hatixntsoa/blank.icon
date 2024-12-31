@@ -9,6 +9,9 @@ REM Define the path to check for blank.ico one directory above inside the "icon"
 set "icon_dir=%script_dir%\..\icon"
 set "blank_file=%icon_dir%\blank.ico"
 
+REM Resolve the absolute path of the blank.ico file
+for %%F in ("%blank_file%") do set "blank_file=%%~fF"
+
 REM Check if blank.ico exists in the specified "icon" folder one directory above
 if exist "%blank_file%" (
     echo Found blank.ico in the icon folder (%icon_dir%).

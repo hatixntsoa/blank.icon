@@ -21,7 +21,7 @@ First, clone the repository from GitHub to get the script.
 1. Open **Command Prompt** or **PowerShell**.
 2. Run the following command to clone the repository:
    ```bash
-   git clone https://github.com/h471x/blank_icon.git
+   git clone https://github.com/hatixntsoa/blank_icon.git
    ```
 3. Navigate to the `blank_icon` directory:
    ```bash

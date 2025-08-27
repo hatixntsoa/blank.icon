@@ -21,16 +21,16 @@ First, clone the repository from GitHub to get the script.
 1. Open **Command Prompt** or **PowerShell**.
 2. Run the following command to clone the repository:
    ```bash
-   git clone https://github.com/hatixntsoa/blank_icon.git
+   git clone https://github.com/hatixntsoa/blank.icon.git
    ```
-3. Navigate to the `blank_icon` directory:
+3. Navigate to the `blank.icon` directory:
    ```bash
-   cd blank_icon
+   cd blank.icon
    ```
 
 ### Step 2: Run the Script
 #### From Command Line
-1. Ensure you are in the `blank_icon` directory (where `scripts\blank.bat` is located).
+1. Ensure you are in the `blank.icon` directory (where `scripts\blank.bat` is located).
 2. Run the following command to execute the batch file as an administrator:
    ```batch
    runas /user:Administrator ".\scripts\blank.bat"
@@ -38,7 +38,7 @@ First, clone the repository from GitHub to get the script.
 3. You will be prompted to enter the full path to the `blank.ico` file. If the `.ico` file is located in the same directory as the script, the script will automatically detect it.
 
 #### From Windows Explorer
-1. Navigate to the `scripts` folder inside the `blank_icon` directory.
+1. Navigate to the `scripts` folder inside the `blank.icon` directory.
 2. Right-click the `blank.bat` file and select **Run as administrator** from the context menu.
 3. Follow the on-screen prompts to enter the path to the custom `.ico` file (if necessary).
 
@@ -54,7 +54,7 @@ The script will automatically restart **Windows Explorer** to apply the changes.
 If you want to revert the changes and restore the default shortcut arrow icon, you can use the `revert.bat` script.
 
 ### Step 1: Run the Revert Script
-1. Navigate to the `scripts` folder inside the `blank_icon` directory.
+1. Navigate to the `scripts` folder inside the `blank.icon` directory.
 2. Right-click the `revert.bat` file and select **Run as administrator** from the context menu.
 3. The script will remove the custom icon and restore the default Windows shortcut arrow.
 

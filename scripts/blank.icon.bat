@@ -19,7 +19,7 @@ setlocal enabledelayedexpansion
 :: for ANSI color code insertion
 :: =================================================
 
-set "ESC="
+set "ESC="
 
 :: Enabling emoji printing
 chcp 65001 >nul

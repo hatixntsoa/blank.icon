@@ -129,7 +129,7 @@ timeout /t 1 /nobreak >nul
 set "icon_url=https://raw.githubusercontent.com/hatixntsoa/blank.icon/master/icon/blank.ico"
 
 :: Define local temporary folder inside the script directory
-set "icon_dir=%~dp0..\icon"
+set "icon_dir=%~dp0\icon"
 if not exist "%icon_dir%" mkdir "%icon_dir%"
 set "downloaded_icon=%icon_dir%\blank.ico"
 
@@ -173,7 +173,7 @@ timeout /t 1 /nobreak >nul
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Icons" /v 29 /t REG_SZ /d "%safe_icon%" /f >nul 2>nul
 timeout /t 1 /nobreak >nul
 
-if %errorlevel% neq 0 (
+if %errorlevel% neq 1 (
     echo. %DONE% Registry entry added successfully!
     echo.
 ) else (

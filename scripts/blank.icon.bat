@@ -173,7 +173,7 @@ timeout /t 1 /nobreak >nul
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Icons" /v 29 /t REG_SZ /d "%safe_icon%" /f >nul 2>nul
 timeout /t 1 /nobreak >nul
 
-if %errorlevel% neq 0 (
+if %errorlevel% neq 1 (
     echo. %DONE% Registry entry added successfully!
     echo.
 ) else (

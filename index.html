@@ -1,236 +1,204 @@
-@echo off
-setlocal enabledelayedexpansion
+# ===================================================================
+# Description:
+# Sets a custom blank.ico icon for Windows shortcuts
+# in order to remove the default shortcut arrow overlay.
+# The change can be reverted at any time.
+# Author: Hatix Ntsoa
+# Usage:
+# shortcut.icon.manager.ps1 set     → Remove shortcut arrow
+# shortcut.icon.manager.ps1 revert  → Restore default arrow
+# ===================================================================
 
-
-:: ===================================================================
-::  Description:
-::    Sets a custom blank.ico icon for windows shortcuts
-::    in order to ::ove the default shortcut arrow icon.
-::    The change can be reverted at any time as well.
-::  Author: Hatix Ntsoa
-::  Usage:
-::    shortcut.icon.manager.bat --set      → Set custom blank.ico icon
-::    shortcut.icon.manager.bat --revert   → Revert to default icon
-:: ===================================================================
-
-
-:: =================================================
-:: Set the escape character
-:: for ANSI color code insertion
-:: =================================================
-
-set "ESC="
-
-:: Enabling emoji printing
-chcp 65001 >nul
-
-
-:: =================================================
-:: Define color variables
-:: =================================================
-
-set "BLUE=%ESC%[34m"
-set "RED=%ESC%[31m"
-set "GREEN=%ESC%[32m"
-set "RESET=%ESC%[0m"
-
-
-:: =================================================
-:: Colored Tags
-:: =================================================
-
-set "ERR=[%RED%ERROR%RESET%]"
-set "INF=[%BLUE%INFO%RESET%]"
-set "DONE=[%GREEN%DONE%RESET%]"
-set "BANNER=[%BLUE%BANNER%RESET%]"
-
-
-:: ====================================================
-:: Banner ASCII Art
-:: ====================================================
-
-:::      _     _             _      _
-:::     | |__ | | __ _ _ __ | | __ (_) ___ ___  _ __
-:::     | '_ \| |/ _` | '_ \| |/ / | |/ __/ _ \| '_ \
-:::     | |_) | | (_| | | | |   < _| | (_| (_) | | | |
-:::     |_.__/|_|\__,_|_| |_|_|\_(_)_|\___\___/|_| |_|
-:::                                        @hatixntsoa
-:::
-:::    
-
-cls
-for /f "delims=: tokens=*" %%A in ('findstr /b "::: " "%~f0"') do (
-    echo %BLUE%%%A%RESET%
+# Requires Administrator privileges
+param(
+    [Parameter(Mandatory=$true, Position=0)]
+    [ValidateSet("set", "revert")]
+    [string]$Action
 )
 
+# Enable UTF-8 for proper emoji display
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-:: ===================================================
-:: Auto-elevate script if not running as Administrator
-:: ===================================================
+# =================================================
+# Colored Tags (using Write-Host with foreground colors)
+# =================================================
+$ERR  = "[ERROR]"   # Red
+$INF  = "[INFO]"    # Blue
+$DONE = "[DONE]"    # Green
+$BANNER = "[BANNER]"# Blue
 
-if "%~1"=="" (
-    echo. %INF% Usage:
-    echo   .\%~nx0 --set
-    echo   .\%~nx0 --revert
-    exit /b 1
-) else if /i not "%~1"=="--set" if /i not "%~1"=="--revert" (
-    echo %ERR% Unknown option "%~1"
-    echo.
-    echo. %INF% Usage:
-    echo   .\%~nx0 --set
-    echo   .\%~nx0 --revert
-    exit /b 1
-)
+# ====================================================
+# Banner ASCII Art
+# ====================================================
+$bannerLines = @"
+ _     _             _      _
+| |__ | | __ _ _ __ | | __ (_) ___ ___  _ __
+| '_ \| |/ _` | '_ \| |/ / | |/ __/ _ \| '_ \
+| |_) | | (_| | | | |   < _| | (_| (_) | | | |
+|_.__/|_|\__,_|_| |_|_|\_(_)_|\___\___/|_| |_|
+                                   @hatixntsoa
+"@ -split "`n"
 
-:check_admin
-NET SESSION >nul 2>&1
-if %errorlevel% neq 0 (
-    echo. %INF% Elevating to Administrator.
-    timeout /t 1 /nobreak >nul
-    powershell -Command ^
-        "$ErrorActionPreference = 'Stop';" ^
-        "try {" ^
-        "    Start-Process '%~f0' -Verb RunAs -ArgumentList '%*';" ^
-        "    Write-Host '%DONE% Successfully elevated to Administrator!';" ^
-        "    Write-Host ' ';" ^
-        "    exit 0;" ^
-        "} catch {" ^
-        "    Write-Host '%ERR% You need administrator privileges to run this script.';" ^
-        "    exit 1;" ^
-    "}"
-)
+Clear-Host
+foreach ($line in $bannerLines) {
+    Write-Host $line.TrimStart() -ForegroundColor Blue
+}
+Write-Host ""
 
+# ===================================================
+# Auto-elevate if not running as Administrator
+# ===================================================
+function Test-Admin {
+    $current = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal $current
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
 
-:: =================================================
-:: Argument handling
-:: =================================================
+if (-not (Test-Admin)) {
+    Write-Host "$INF Elevating to Administrator." -ForegroundColor Blue
+    Start-Sleep -Seconds 1
 
-if /i "%~1"=="--set" (
-    call :set_icon
-    exit /b
-) else if /i "%~1"=="--revert" (
-    call :revert_icon
-    exit /b
-)
+    try {
+        Start-Process powershell.exe -Verb RunAs -ArgumentList ("-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" $Action")
+        Write-Host "$DONE Successfully elevated to Administrator!" -ForegroundColor Green
+        Write-Host ""
+        exit 0
+    }
+    catch {
+        Write-Host "$ERR You need administrator privileges to run this script." -ForegroundColor Red
+        exit 1
+    }
+}
 
-goto :eof
+# =================================================
+# Helper function for consistent delays and messages
+# =================================================
+function Show-Info   { param([string]$msg) Write-Host "$INF $msg" -ForegroundColor Blue;  Start-Sleep -Seconds 1 }
+function Show-Done   { param([string]$msg) Write-Host "$DONE $msg" -ForegroundColor Green; Write-Host "" }
+function Show-Error  { param([string]$msg) Write-Host "$ERR $msg" -ForegroundColor Red;   Write-Host "" }
 
+# =================================================
+# Function: Set custom blank icon (remove arrow)
+# =================================================
+function Set-Icon {
+    Show-Info "Configuring blank.ico."
 
-::==============================================================
-:: Function: set_icon
-::==============================================================
+    $icon_url = "https://blank.hatixntsoa.site/icon/blank.ico"
 
-:set_icon
-timeout /t 1 /nobreak >nul
-echo. %INF% Configuring blank.ico.
-timeout /t 1 /nobreak >nul
+    # Temporary folder next to the script (same as batch: ..\icon)
+    $scriptDir = Split-Path -Parent $PSCommandPath
+    $icon_dir = Join-Path (Split-Path -Parent $scriptDir) "icon"
+    if (-not (Test-Path $icon_dir)) { New-Item -ItemType Directory -Path $icon_dir | Out-Null }
+    $downloaded_icon = Join-Path $icon_dir "blank.ico"
 
-:: Define Icon URL Path based on the custom domain
-set "icon_url=https://blank.hatixntsoa.site/icon/blank.ico"
+    # Safe permanent location in user's Pictures folder
+    $safe_dir = Join-Path $env:USERPROFILE "Pictures\blank"
+    $safe_icon = Join-Path $safe_dir "blank.ico"
 
-:: Define local temporary folder inside the script directory
-set "icon_dir=%~dp0\icon"
-if not exist "%icon_dir%" mkdir "%icon_dir%"
-set "downloaded_icon=%icon_dir%\blank.ico"
+    # Check if icon already exists in safe location
+    if (Test-Path $safe_icon) {
+        Show-Done "Icon already stored."
+    }
+    else {
+        Show-Info "Downloading blank.ico"
 
-:: Define safe permanent destination under user's Pictures folder
-set "safe_dir=%USERPROFILE%\Pictures\blank"
-set "safe_icon=%safe_dir%\blank.ico"
+        try {
+            Invoke-WebRequest -Uri $icon_url -OutFile $downloaded_icon -UseBasicParsing | Out-Null
+            if (-not (Test-Path $downloaded_icon)) { throw }
+            Show-Done "blank.ico downloaded."
+        }
+        catch {
+            Show-Error "Failed to download icon from $icon_url."
+            exit 1
+        }
 
-:: Check if icon already exists locally
-if exist "%safe_icon%" (
-    echo. %DONE% Icon already stored.
-    echo.
-    timeout /t 1 /nobreak >nul
-) else (
-    :: Download the icon from GitHub using curl
-    echo. %INF% Downloading blank.ico
-    curl -L -s -o "%downloaded_icon%" "%icon_url%"
-    if not exist "%downloaded_icon%" (
-        echo %ERR% Failed to download icon from %icon_url%.
-        timeout /t 1 /nobreak >nul
-        exit /b
-    ) else (
-        echo. %DONE% blanc.ico downloaded.
-        echo.
-    )
+        if (-not (Test-Path $safe_dir)) { New-Item -ItemType Directory -Path $safe_dir | Out-Null }
 
-    :: Ensure the safe folder exists
-    if not exist "%safe_dir%" mkdir "%safe_dir%"
+        Show-Info "Copying blank.ico to $safe_dir."
+        Start-Sleep -Seconds 1
+        Copy-Item $downloaded_icon $safe_icon -Force | Out-Null
+        Show-Done "blank.ico copied."
+    }
 
-    :: Copy the downloaded icon to the safe location
-    echo. %INF% Copying blank.ico to %safe_dir%.
-    timeout /t 1 /nobreak >nul
-    copy /y "%downloaded_icon%" "%safe_icon%" >nul
-    echo. %DONE% blank.ico copied.
-    echo.
-    timeout /t 1 /nobreak >nul
-)
+    # Add registry entry using the safe local path
+    Show-Info "Adding registry entry."
+    Start-Sleep -Seconds 1
 
-:: Add registry entry using the safe local path
-echo. %INF% Adding registry entry.
-timeout /t 1 /nobreak >nul
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Icons" /v 29 /t REG_SZ /d "%safe_icon%" /f >nul 2>nul
-timeout /t 1 /nobreak >nul
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Icons" /v 29 /t REG_SZ /d "$safe_icon" /f | Out-Null
 
-if %errorlevel% neq 1 (
-    echo. %DONE% Registry entry added successfully!
-    echo.
-) else (
-    echo %ERR% Failed to add registry entry. Please ensure you have admin rights.
-    echo.
-)
+    if ($LASTEXITCODE -ne 0) {
+        Show-Error "Failed to add registry entry. Please ensure you have admin rights."
+    }
+    else {
+        Show-Done "Registry entry added successfully!"
+    }
 
-:: Restart Explorer to apply changes
-timeout /t 1 /nobreak >nul
-echo. %INF% Restarting Windows Explorer.
-taskkill /f /im explorer.exe >nul 2>&1
-start explorer.exe
-timeout /t 1 /nobreak >nul
-echo. %DONE% Windows explorer restarted.
-echo.
-timeout /t 1 /nobreak >nul
+    # Restart Explorer
+    Start-Sleep -Seconds 1
+    Show-Info "Restarting Windows Explorer."
 
-:: Cleanup temporary icon folder
-echo. %INF% Cleaning up temporary files.
-del /f /q "%downloaded_icon%" >nul 2>&1
-rd "%icon_dir%" 2>nul
-timeout /t 1 /nobreak >nul
-echo. %DONE% Temporary files cleaned.
-echo.
+    # Force kill all explorer.exe processes (exact equivalent of taskkill /f /im explorer.exe >nul 2>&1)
+    taskkill /f /im explorer.exe > $null 2>&1
 
-timeout /t 1 /nobreak >nul
-echo. %INF% Windows shortcut array icon removed successfully 🎉
-exit /b
+    # Immediate restart (exact equivalent of start explorer.exe)
+    & explorer.exe
 
+    # Wait 1 second without breaking (exact equivalent of timeout /t 1 /nobreak >nul)
+    Start-Sleep -Seconds 1
 
-::==============================================================
-:: Function: revert_icon
-::==============================================================
+    Show-Done "Windows explorer restarted."
 
-:revert_icon
-echo. %INF% Restoring windows arrow icon.
-echo.
-timeout /t 1 /nobreak >nul
+    # Cleanup temporary files
+    Start-Sleep -Seconds 1
+    Show-Info "Cleaning up temporary files."
+    if (Test-Path $downloaded_icon) { Remove-Item $downloaded_icon -Force -ErrorAction SilentlyContinue }
+    if (Test-Path $icon_dir) { Remove-Item $icon_dir -Recurse -Force -ErrorAction SilentlyContinue }
+    Start-Sleep -Seconds 1
+    Show-Done "Temporary files cleaned."
 
-:: Remove registry entry
-echo. %INF% Removing registry entry.
-reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Icons" /v 29 /f >nul 2>nul
-timeout /t 1 /nobreak >nul
-echo. %DONE% Registry entry removed.
-echo.
-timeout /t 1 /nobreak >nul
+    Start-Sleep -Seconds 1
+    Write-Host "$INF Windows shortcut arrow icon removed successfully!" -ForegroundColor Blue
+}
 
-:: Restart Explorer to apply changes
-echo. %INF% Restarting Windows Explorer.
-taskkill /f /im explorer.exe >nul 2>&1
-start explorer.exe
-timeout /t 1 /nobreak >nul
-echo. %DONE% Windows explorer restarted.
-echo.
-timeout /t 1 /nobreak >nul
+# =================================================
+# Function: Revert to default arrow
+# =================================================
+function Revert-Icon {
+    Show-Info "Restoring windows arrow icon."
+    Write-Host ""
 
-echo. %INF% Windows shortcut arrow icon restored 🎉
-timeout /t 1 /nobreak >nul
-exit /b
-goto :eof
+    Start-Sleep -Seconds 1
+    Show-Info "Removing registry entry."
+    reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Icons" /v 29 /f | Out-Null
+    Start-Sleep -Seconds 1
+    Show-Done "Registry entry removed."
+
+    Start-Sleep -Seconds 1
+    Show-Info "Restarting Windows Explorer."
+
+    # Force kill all explorer.exe processes (exact equivalent of taskkill /f /im explorer.exe >nul 2>&1)
+    taskkill /f /im explorer.exe > $null 2>&1
+
+    # Immediate restart (exact equivalent of start explorer.exe)
+    & explorer.exe
+
+    # Wait 1 second without breaking (exact equivalent of timeout /t 1 /nobreak >nul)
+    Start-Sleep -Seconds 1
+
+    Show-Done "Windows explorer restarted."
+    Start-Sleep -Seconds 1
+    Write-Host "$INF Windows shortcut arrow icon restored!" -ForegroundColor Blue
+    Start-Sleep -Seconds 1
+}
+
+# =================================================
+# Execute requested action
+# =================================================
+if ($Action -eq "set") {
+    Set-Icon
+}
+elseif ($Action -eq "revert") {
+    Revert-Icon
+}
+
+exit
